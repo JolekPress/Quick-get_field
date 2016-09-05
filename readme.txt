@@ -3,6 +3,7 @@ Contributors: JohnOlek
 Tags: acf, advanced custom fields, get_field, meta, postmeta, post_meta
 Requires at least: 4.5
 Tested up to: 4.6
+Stable tag: trunk
 License: GPLv3
 License URI: http://www.gnu.org/licenses/gpl-3.0.html
 
@@ -10,7 +11,7 @@ A quicker, more efficient way of retrieving Advanced Custom Fields (ACF) data.
 
 == Description ==
 
-This plugin is specifically for developers. It is intended to provide a more efficient way of accessing Advanced Custom Fields (ACF) data. Once installed, there will be a new function named `jp_quick_get_field()` that accepts the same parameters as the standard ACF `get_field()` function.
+This plugin is specifically for developers. It is intended to provide a more efficient way of accessing Advanced Custom Fields (ACF) data. Once installed, there will be a new function named `jp_quick_get_field()` that accepts the same parameters as the standard ACF `get_field()` function and returns the same data, but faster.
 
 == Installation ==
 
