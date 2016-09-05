@@ -2,7 +2,7 @@
 /*
 Plugin Name: JolekPress quick get_field
 Plugin URI: https://github.com/JolekPress/Quick-get_field
-Description: A quicker way of accessing Advanced Custom Fields data
+Description: A quicker, more efficient way of retrieving Advanced Custom Fields (ACF) data.
 Version: 0.1.0
 Author: John Oleksowicz
 Author URI: http://jolekpress.com
