@@ -88,11 +88,11 @@ class DatabaseCacher implements CacheInterface
 
     public function getValue($fieldId, $postId)
     {
-        if ($this->cachedValueExists($fieldId, $postId)) {
-            $data = $this->getPostAcfCache($postId);
-            return $data[$fieldId];
+        if (!$this->cachedValueExists($fieldId, $postId)) {
+            return null;
         }
 
-        return null;
+        $data = $this->getPostAcfCache($postId);
+        return $data[$fieldId];
     }
 }
