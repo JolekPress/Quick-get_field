@@ -44,6 +44,8 @@ class DatabaseCacher implements CacheInterface
         }
 
         $this->fetchedCacheData[$postId] = $data;
+
+        return $this->fetchedCacheData[$postId];
     }
 
     public function getPostAcfCache($postId)
@@ -62,6 +64,11 @@ class DatabaseCacher implements CacheInterface
             $data = \get_post_meta($postId, self::POSTMETA_CACHE_KEY, $getSingleValue);
         }
 
+        // If empty, it means we haven't even checked it yet
+        if (empty($data)) {
+            $data = $this->updatePostAcfCache($postId);
+        }
+
         $this->fetchedCacheData[$postId] = $data;
 
         return $this->fetchedCacheData[$postId];
@@ -77,12 +84,6 @@ class DatabaseCacher implements CacheInterface
 
         if ($cachedData === self::NO_DATA_EXISTS) {
             return false;
-        }
-
-        // If empty, it means we haven't even checked it yet, so let's check and then call this method again.
-        if (empty($cachedData)) {
-            $this->updatePostAcfCache($postId);
-            return $this->cachedValueExists($fieldId, $postId);
         }
     }
 
