@@ -10,6 +10,8 @@ namespace JP\QuickGetField;
 class Getter
 {
     private $cacher;
+    const ALLOWABLE_POST_TYPES_FILTER = 'jp_quick_get_field_allowable_post_types_array';
+    const CACHE_ACF_OPTIONS_FILTER = 'jp_quick_get_field_cache_acf_options';
 
     /**
      * Value used if no ACF data found for a specific post. Allows us to identify which posts haven't been cached yet.
@@ -31,7 +33,7 @@ class Getter
 
     private function areWeCachingAcfOptions()
     {
-        return \apply_filters('jp_quick_get_field_cache_acf_options', true);
+        return \apply_filters(self::CACHE_ACF_OPTIONS_FILTER, true);
     }
 
     /**
@@ -75,10 +77,9 @@ class Getter
         $postTypes = [
             'post',
             'page',
-            'options',
         ];
 
-        $postTypes = \apply_filters('jp_quick_get_field_allowable_post_types_array', $postTypes);
+        $postTypes = \apply_filters(self::ALLOWABLE_POST_TYPES_FILTER, $postTypes);
 
         if (empty($postTypes)) {
             $postTypes = [];
@@ -101,17 +102,34 @@ class Getter
             $postId = $post->ID;
         }
 
+        if (is_preview()) {
+            return $this->getBackupValue($fieldId, $postId);
+        }
+
         $value = $this->cacher->getValue($fieldId, $postId);
 
         if ($value !== null) {
             return $value;
         }
 
-        if (Helper::isAcfEnabled()) {
-            return \get_field($fieldId, $postId);
-        }
+        return $this->getBackupValue($fieldId, $postId);
+    }
 
-        // TODO: Check if repeater and parse
+    /**
+     * Returns a fallback value. Useful if the cached value is not found or if we're on a preview page where we
+     * don't want to use the cached value.
+     *
+     * @param $fieldId
+     * @param $postId
+     *
+     * @return mixed|null|void
+     */
+    public function getBackupValue($fieldId, $postId)
+    {
+        if (Helper::isAcfEnabled()) {
+            return get_field($fieldId, $postId);
+        }
+        // TODO: Check if repeater or flexible content and parse
         return \get_post_meta($postId, $fieldId);
     }
 }
