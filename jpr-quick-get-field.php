@@ -19,7 +19,7 @@ add_action('wp_loaded', function() {
     global $getter;
     $getter = new JP\QuickGetField\Getter($dbCacher);
 
-    function jp_quick_get_field($fieldId, $postId = null) {
+    function jpr_quick_get_field($fieldId, $postId = null) {
         /** @var JP\QuickGetField\Getter $getter */
         global $getter;
 
