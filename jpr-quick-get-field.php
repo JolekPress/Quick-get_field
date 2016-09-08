@@ -8,21 +8,24 @@ Author: John Oleksowicz
 Author URI: http://jolekpress.com
 */
 
-add_action('wp_loaded', function() {
-    require 'quick-get-classes/Getter.php';
-    require 'quick-get-classes/CacheInterface.php';
-    require 'quick-get-classes/DatabaseCacher.php';
-    require 'quick-get-classes/Helper.php';
+require 'quick-get-classes/Getter.php';
+require 'quick-get-classes/CacheInterface.php';
+require 'quick-get-classes/DatabaseCacher.php';
+require 'quick-get-classes/Helper.php';
+require 'quick-get-classes/WPObjectCacheCacher.php';
 
-    $dbCacher = new JP\QuickGetField\DatabaseCacher();
+$jpQuickGetFieldCacher = new JP\QuickGetField\DatabaseCacher();
 
-    global $getter;
-    $getter = new JP\QuickGetField\Getter($dbCacher);
+/**
+ * In case you want to use a different caching mechanism, here is a filter to do that. $dbCacher MUST implement
+ * the JP\QuickGetField\CacheInterface.
+ */
+$jpQuickGetFieldCacher = apply_filters('jpr_quick_get_field_cacher', $jpQuickGetFieldCacher);
 
-    function jpr_quick_get_field($fieldId, $postId = null) {
-        /** @var JP\QuickGetField\Getter $getter */
-        global $getter;
+$jpQuickGetFieldGetter = new JP\QuickGetField\Getter($jpQuickGetFieldCacher);
 
-        return $getter->getField($fieldId, $postId);
-    }
-});
+function jpr_quick_get_field($fieldId, $postId = null) {
+    global $jpQuickGetFieldGetter;
+
+    return $jpQuickGetFieldGetter->getField($fieldId, $postId);
+}
