@@ -35,11 +35,11 @@ class DatabaseCacher implements CacheInterface
         if (Helper::postIdIsOptionsPage($postId)) {
 
             $autoload = false;
-            update_option(self::OPTIONS_PAGE_OPTION_KEY, $data, $autoload);
+            \update_option(self::OPTIONS_PAGE_OPTION_KEY, $data, $autoload);
 
         } else {
 
-            update_post_meta($postId, self::POSTMETA_CACHE_KEY, $data);
+            \update_post_meta($postId, self::POSTMETA_CACHE_KEY, $data);
 
         }
 
