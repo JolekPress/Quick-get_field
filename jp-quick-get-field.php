@@ -9,10 +9,10 @@ Author URI: http://jolekpress.com
 */
 
 add_action('wp_loaded', function() {
-    require 'src/Getter.php';
-    require 'src/CacheInterface.php';
-    require 'src/DatabaseCacher.php';
-    require 'src/Helper.php';
+    require 'quick-get-classes/Getter.php';
+    require 'quick-get-classes/CacheInterface.php';
+    require 'quick-get-classes/DatabaseCacher.php';
+    require 'quick-get-classes/Helper.php';
 
     $dbCacher = new JP\QuickGetField\DatabaseCacher();
 
