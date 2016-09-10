@@ -29,3 +29,39 @@ function jpr_quick_get_field($fieldId, $postId = null) {
 
     return $jpQuickGetFieldGetter->getField($fieldId, $postId);
 }
+
+/**
+ * Shortcode for efficient display of text based ACF values
+ *
+ * @param $userProvidedAtts
+ * @return string
+ */
+function jpr_quick_field_shortcode($userProvidedAtts)
+{
+    global $post;
+    $defaults = [
+        'field' => '',
+        'post_id' => $post->ID,
+    ];
+
+    $filteredAtts = shortcode_atts($defaults, $userProvidedAtts, 'jpr_quick_field');
+
+    $field = $filteredAtts['field'];
+    $post_id = $filteredAtts['post_id'];
+
+    if (empty($field)) {
+        return '';
+    }
+
+    $value = jpr_quick_get_field($field, $post_id);
+
+    if (!is_string($value)) {
+        return '';
+    }
+
+    return $value;
+}
+
+add_shortcode('jpr_quick_field', 'jpr_quick_field_shortcode');
+
+
