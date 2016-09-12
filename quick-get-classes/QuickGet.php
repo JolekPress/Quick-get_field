@@ -47,7 +47,60 @@ class QuickGet
     }
 
     /**
-     * By storing this value BEFORE ACF fields are updated, we can know which $postId is appropriate to skip
+     * It should be possible to use this just like get_field()
+     *
+     * @param $fieldId
+     * @param null $postId
+     * @return mixed|null|void
+     */
+    public function getField($fieldId, $postId = null)
+    {
+        if ($postId === null) {
+            global $post;
+            $postId = $post->ID;
+        }
+
+        if (is_preview() || !$this->shouldWeCachePostId($postId)) {
+            return $this->getBackupValue($fieldId, $postId);
+        }
+
+        $cachedValues = $this->cacher->getPostAcfCache($postId);
+
+        // If the returned value is false, it means we haven't ever updated its cache, so let's check it now.
+        if ($cachedValues === false) {
+            $cachedValues = $this->updateAndReturnAcfCacheForPostId($postId);
+        }
+
+        if (isset($cachedValues[$fieldId])) {
+            return $cachedValues[$fieldId];
+        }
+
+        // The value wasn't in the cache for some reason, so let's rely on the backup methods.
+        return $this->getBackupValue($fieldId, $postId);
+    }
+
+    /**
+     * Returns a fallback value. Useful if the cached value is not found or if we're on a preview page where we
+     * don't want to use the cached value.
+     *
+     * @param $fieldId
+     * @param $postId
+     *
+     * @return mixed|null|void
+     */
+    public function getBackupValue($fieldId, $postId)
+    {
+        if (Helper::isAcfEnabled()) {
+            return get_field($fieldId, $postId);
+        }
+
+        // TODO: Check if repeater or flexible content and parse
+        return \get_post_meta($postId, $fieldId);
+    }
+
+    /**
+     * By storing this value BEFORE ACF fields are updated, we can know which $postId is appropriate to skip later on,
+     * because the normal saving process fires update_postmeta
      *
      * @param $postId
      */
@@ -90,17 +143,10 @@ class QuickGet
             return;
         }
 
+        // Update the cached data array with the new value
         $cachedData[$meta_key] = $meta_value;
 
         $this->cacher->updatePostAcfCache($object_id, $cachedData);
-    }
-
-    /**
-     * @return bool - whether or not we are caching the ACF options. Default is true but can be disabled via filter.
-     */
-    private function areWeCachingAcfOptions()
-    {
-        return \apply_filters(self::CACHE_ACF_OPTIONS_FILTER, true);
     }
 
     /**
@@ -116,9 +162,22 @@ class QuickGet
             return;
         }
 
+        $this->updateAndReturnAcfCacheForPostId($postId);
+    }
+
+    /**
+     * Updates the ACF cache for the provided postId and returns the associative array.
+     *
+     * @param $postId
+     * @return array|bool
+     */
+    private function updateAndReturnAcfCacheForPostId($postId)
+    {
         $currentData = $this->getAllCurrentAcfValues($postId);
 
         $this->cacher->updatePostAcfCache($postId, $currentData);
+
+        return $currentData;
     }
 
     /**
@@ -144,7 +203,7 @@ class QuickGet
     }
 
     /**
-     * Returns an array of the post types that this plugin should attempt to cache.
+     * Returns an array of the post types that this plugin should attempt to cache. Caches posts and pages by default.
      *
      * @return array
      */
@@ -165,59 +224,29 @@ class QuickGet
     }
 
     /**
-     * It should be possible to use this just like get_field()
-     *
-     * @param $fieldId
-     * @param null $postId
-     * @return mixed|null|void
-     */
-    public function getField($fieldId, $postId = null)
-    {
-        if ($postId === null) {
-            global $post;
-            $postId = $post->ID;
-        }
-
-        if (is_preview() || !$this->shouldWeCachePostId($postId)) {
-            return $this->getBackupValue($fieldId, $postId);
-        }
-
-        $value = $this->cacher->getValue($fieldId, $postId);
-
-        if ($value !== null) {
-            return $value;
-        }
-
-        return $this->getBackupValue($fieldId, $postId);
-    }
-
-    /**
      * Very expensive call. Used to retrieve all current ACF data.
      *
      * @param $postId
      *
-     * @return array|bool
+     * @return array
      */
     private function getAllCurrentAcfValues($postId)
     {
-        return \get_fields($postId);
+        $fieldsData = \get_fields($postId);
+
+        // get_fields will return false if it doesn't find anything, but we want to always be working with arrays
+        if (empty($fieldsData)) {
+            $fieldsData = [];
+        }
+
+        return $fieldsData;
     }
 
     /**
-     * Returns a fallback value. Useful if the cached value is not found or if we're on a preview page where we
-     * don't want to use the cached value.
-     *
-     * @param $fieldId
-     * @param $postId
-     *
-     * @return mixed|null|void
+     * @return bool - whether or not we are caching the ACF options. Default is true but can be disabled via filter.
      */
-    public function getBackupValue($fieldId, $postId)
+    private function areWeCachingAcfOptions()
     {
-        if (Helper::isAcfEnabled()) {
-            return get_field($fieldId, $postId);
-        }
-        // TODO: Check if repeater or flexible content and parse
-        return \get_post_meta($postId, $fieldId);
+        return \apply_filters(self::CACHE_ACF_OPTIONS_FILTER, true);
     }
 }

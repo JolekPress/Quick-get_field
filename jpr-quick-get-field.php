@@ -15,7 +15,7 @@ require 'quick-get-classes/Helper.php';
 require 'quick-get-classes/WPObjectCacheCacher.php';
 
 // Default cacher
-$jprQuickGetFieldCacher = new JP\QuickGetField\DatabaseCacher();
+$jprQuickGetFieldCacher = new JPR\QuickGetField\DatabaseCacher();
 
 /**
  * In case you want to use a different caching mechanism, here is a filter to do that. The returned object MUST implement

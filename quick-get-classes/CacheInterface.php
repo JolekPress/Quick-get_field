@@ -14,7 +14,7 @@ interface CacheInterface
      *
      * @return mixed
      */
-    public function updatePostAcfCache($postId, $data);
+    public function updatePostAcfCache($postId, array $data);
 
     /**
      * Retrieves the ACF cache for the specified $postId. Returns an associative array of $key => $value pairs.
@@ -24,14 +24,4 @@ interface CacheInterface
      * @return mixed
      */
     public function getPostAcfCache($postId);
-
-    /**
-     * Retrieve a specific value from the ACF cache.
-     *
-     * @param $fieldId
-     * @param $postId
-     *
-     * @return mixed
-     */
-    public function getValue($fieldId, $postId);
 }
