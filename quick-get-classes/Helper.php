@@ -24,4 +24,13 @@ class Helper
     {
         return function_exists('get_field');
     }
+
+    public static function isMetaKeyHidden($key)
+    {
+        if (strpos($key, '_') === 0) {
+            return true;
+        }
+
+        return false;
+    }
 }

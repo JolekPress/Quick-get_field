@@ -1,6 +1,6 @@
 <?php
 
-namespace JPR\QuickGetField;
+namespace JP\QuickGetField;
 
 class DatabaseCacher implements CacheInterface
 {
@@ -24,10 +24,16 @@ class DatabaseCacher implements CacheInterface
 
     const NO_DATA_EXISTS = 'noAcfDataExistsForThisPostId';
 
-    public function updatePostAcfCache($postId)
+    /**
+     * Update the $postId's ACF cache with the provided $data.
+     *
+     * @param $postId
+     * @param $data
+     *
+     * @return mixed
+     */
+    public function updatePostAcfCache($postId, $data)
     {
-        $data = \get_fields($postId);
-
         if (empty($data)) {
             $data = self::NO_DATA_EXISTS;
         }
@@ -48,6 +54,15 @@ class DatabaseCacher implements CacheInterface
         return $this->fetchedCacheData[$postId];
     }
 
+    /**
+     * Retrieve's the ACF cache for a $postId.
+     *
+     * If the cache has never been checked for the post, it will be updated.
+     *
+     * @param $postId
+     *
+     * @return mixed
+     */
     public function getPostAcfCache($postId)
     {
         if (isset($this->fetchedCacheData[$postId])) {
@@ -66,7 +81,8 @@ class DatabaseCacher implements CacheInterface
 
         // If empty, it means we haven't even checked it yet
         if (empty($data)) {
-            $data = $this->updatePostAcfCache($postId);
+            $allFields = \get_fields($postId); // TODO: Figure out a better way to handle this.
+            $data = $this->updatePostAcfCache($postId, $allFields);
         }
 
         $this->fetchedCacheData[$postId] = $data;
@@ -74,6 +90,14 @@ class DatabaseCacher implements CacheInterface
         return $this->fetchedCacheData[$postId];
     }
 
+    /**
+     * Checks to see if the cache contains the specified $fieldId
+     *
+     * @param $fieldId
+     * @param $postId
+     *
+     * @return bool
+     */
     public function cachedValueExists($fieldId, $postId)
     {
         $cachedData = $this->getPostAcfCache($postId);
@@ -87,6 +111,14 @@ class DatabaseCacher implements CacheInterface
         }
     }
 
+    /**
+     * Retrieves a $fieldId value from the cache.
+     *
+     * @param $fieldId
+     * @param $postId
+     *
+     * @return null
+     */
     public function getValue($fieldId, $postId)
     {
         if (!$this->cachedValueExists($fieldId, $postId)) {
