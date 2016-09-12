@@ -66,8 +66,8 @@ class QuickGet
 
         $cachedValues = $this->cacher->getPostAcfCache($postId);
 
-        // If the returned value is false, it means we haven't ever updated its cache, so let's check it now.
-        if ($cachedValues === false) {
+        // If the returned value is false or an empty string, it means we haven't ever updated its cache, so let's check it now.
+        if ($cachedValues === false || $cachedValues === '') {
             $cachedValues = $this->updateAndReturnAcfCacheForPostId($postId);
         }
 
