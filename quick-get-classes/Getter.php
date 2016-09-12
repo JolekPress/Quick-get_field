@@ -1,6 +1,6 @@
 <?php
 
-namespace JP\QuickGetField;
+namespace JPR\QuickGetField;
 
 /**
  * Class JP_Quick_Get_Field

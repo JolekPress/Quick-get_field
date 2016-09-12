@@ -1,6 +1,6 @@
 <?php
 
-namespace JP\QuickGetField;
+namespace JPR\QuickGetField;
 
 class Helper
 {

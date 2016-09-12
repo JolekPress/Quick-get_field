@@ -17,12 +17,12 @@ require 'quick-get-classes/WPObjectCacheCacher.php';
 $jpQuickGetFieldCacher = new JP\QuickGetField\DatabaseCacher();
 
 /**
- * In case you want to use a different caching mechanism, here is a filter to do that. $dbCacher MUST implement
- * the JP\QuickGetField\CacheInterface.
+ * In case you want to use a different caching mechanism, here is a filter to do that. The returned variable MUST
+ * be an object that implements the JPR\QuickGetField\CacheInterface.
  */
 $jpQuickGetFieldCacher = apply_filters('jpr_quick_get_field_cacher', $jpQuickGetFieldCacher);
 
-$jpQuickGetFieldGetter = new JP\QuickGetField\Getter($jpQuickGetFieldCacher);
+$jpQuickGetFieldGetter = new JPR\QuickGetField\Getter($jpQuickGetFieldCacher);
 
 function jpr_quick_get_field($fieldId, $postId = null) {
     global $jpQuickGetFieldGetter;
