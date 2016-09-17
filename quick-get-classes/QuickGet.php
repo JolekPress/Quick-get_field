@@ -12,12 +12,6 @@ class QuickGet
     /** @var CacheInterface $cacher */
     private $cacher;
 
-    /**
-     * Stores the postId of the post that is currently being saved. Helps us identify which meta values to skip when
-     * handling external meta data updates.
-     */
-    private $postIdBeingUpdated;
-
     const ALLOWABLE_POST_TYPES_FILTER = 'jpr_quick_get_field_allowable_post_types_array';
     const CACHE_ACF_OPTIONS_FILTER = 'jpr_quick_get_field_cache_acf_options';
 
@@ -32,18 +26,38 @@ class QuickGet
 
         // @see https://www.advancedcustomfields.com/resources/acfsave_post/.
         //
-        // Using priority 1 lets us do things before the actual ACF values are saved.
-        \add_action('acf/save_post', [$this, 'identifyWhichPostIsBeingUpdated'], 1);
-
-        // @see https://www.advancedcustomfields.com/resources/acfsave_post/.
-        //
         // Priority 20 ensures the new ACF data has been saved and we're caching the updated things.
         \add_action('acf/save_post', [$this, 'maybeCacheAcfDataForPostId'], 20);
-
 
         // This allows us to update the ACF cache for a post if something else updates the meta value, like a standard
         // update_post_meta call. Without this, the cache could become stale, especially if ACF gets disabled.
         \add_action('update_postmeta', [$this, 'maybeUpdateCacheAfterExternalMetaDataChange'], 10, 4);
+
+        $this->setupActionHooksForCachedOptions();
+    }
+
+    /**
+     *  Here we are adding action hooks so we can monitor when non-ACF functionality might be updating one of our
+     *  cached option values. If that happens, we fire a method to update the cache, if necessary.
+     */
+    public function setupActionHooksForCachedOptions()
+    {
+        // If options aren't cached then there's nothing to do.
+        if ($this->areWeCachingAcfOptions()) {
+            return;
+        }
+
+        $options = $this->cacher->getPostAcfCache('options');
+
+        if (empty($options)) {
+            return;
+        }
+
+        // NOTE: The option is prefixed in the wp_options table with "options_" by ACF, which is why the action is
+        // update_option_options_ plus the key and not just the key itself. We have to re-add the prefix ourselves.
+        foreach ($options as $key => $value) {
+            \add_action('update_option_options_' . $key, [$this, 'maybeUpdateOptionsCacheAfterExternalMetaDataChange'], 10, 4);
+        }
     }
 
     /**
@@ -79,6 +93,26 @@ class QuickGet
         return $this->getBackupValue($fieldId, $postId);
     }
 
+    public function maybeUpdateOptionsCacheAfterExternalMetaDataChange($old_value, $new_value, $option)
+    {
+        // No need to do anything since this is an ACF request and the cache will be updated.
+        if (isset($_POST['acf'])) {
+            return;
+        }
+
+        $cachedOptions = $this->cacher->getPostAcfCache('options');
+
+        $storedOptionKey = preg_replace('/^options_/', '', $option);
+
+        if (!isset($cachedOptions[$storedOptionKey]) || $cachedOptions[$storedOptionKey] === $new_value) {
+            return;
+        }
+
+        $cachedOptions[$storedOptionKey] = $new_value;
+
+        $this->cacher->updatePostAcfCache('options', $cachedOptions);
+    }
+
     /**
      * Returns a fallback value. Useful if the cached value is not found or if we're on a preview page where we
      * don't want to use the cached value.
@@ -99,17 +133,6 @@ class QuickGet
     }
 
     /**
-     * By storing this value BEFORE ACF fields are updated, we can know which $postId is appropriate to skip later on,
-     * because the normal saving process fires update_postmeta
-     *
-     * @param $postId
-     */
-    public function identifyWhichPostIsBeingUpdated($postId)
-    {
-        $this->postIdBeingUpdated = $postId;
-    }
-
-    /**
      * It's important that we update the cache if something else changes a meta value that is actually an ACF value.
      *
      * This should only apply to posts that are not currently in the process of being saved (acf/save_post filter)
@@ -122,12 +145,10 @@ class QuickGet
      */
     public function maybeUpdateCacheAfterExternalMetaDataChange($meta_id, $object_id, $meta_key, $meta_value)
     {
-        if ($object_id === $this->postIdBeingUpdated) {
-            return;
-        }
-
-        // Don't do anything with hidden values.
-        if (Helper::isMetaKeyHidden($meta_key)) {
+        if (
+            $this->shouldWeIgnoreKey($meta_key)
+            || $this->isAcfCurrentlyUpdatingPostId($object_id)
+        ) {
             return;
         }
 
@@ -248,5 +269,54 @@ class QuickGet
     private function areWeCachingAcfOptions()
     {
         return \apply_filters(self::CACHE_ACF_OPTIONS_FILTER, true);
+    }
+
+    /**
+     * Return an array of keys that we know we should never bother caching.
+     *
+     * @return array
+     */
+    private function getMetaKeysToAlwaysIgnore()
+    {
+        $ignoredKeys = [
+            '_edit_lock',
+            '_edit_last',
+            DatabaseCacher::POSTMETA_CACHE_KEY,
+        ];
+
+        return $ignoredKeys;
+    }
+
+    /**
+     * Check if the provided $metaKey should be ignored by the cache.
+     *
+     * @param $metaKey
+     * @return bool
+     */
+    private function shouldWeIgnoreKey($metaKey)
+    {
+        if (in_array($metaKey, $this->getMetaKeysToAlwaysIgnore())) {
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Check if ACF is currently in the process of updating $postId
+     *
+     * @param $postId
+     * @return bool
+     */
+    private function isAcfCurrentlyUpdatingPostId($postId)
+    {
+        if (isset($_POST['acf'])
+            && isset($_POST['post_ID'])
+            && $_POST['post_ID'] == $postId)
+        {
+            return true;
+        }
+
+        return false;
     }
 }
