@@ -33,7 +33,7 @@ class DatabaseCacher implements CacheInterface
     public function updatePostAcfCache($postId, array $data)
     {
         if (Helper::postIdIsOptionsPage($postId)) {
-            $autoload = false;
+            $autoload = true;
             \update_option(self::OPTIONS_PAGE_OPTION_KEY, $data, $autoload);
         } else {
             \update_post_meta($postId, self::POSTMETA_CACHE_KEY, $data);
