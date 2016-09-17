@@ -75,7 +75,7 @@ class QuickGet
         }
 
         if (is_preview() || !$this->shouldWeCachePostId($postId)) {
-            return $this->getBackupValue($fieldId, $postId);
+            return $this->getFallbackValue($fieldId, $postId);
         }
 
         $cachedValues = $this->cacher->getPostAcfCache($postId);
@@ -90,7 +90,7 @@ class QuickGet
         }
 
         // The value wasn't in the cache for some reason, so let's rely on the backup methods.
-        return $this->getBackupValue($fieldId, $postId);
+        return $this->getFallbackValue($fieldId, $postId);
     }
 
     public function maybeUpdateOptionsCacheAfterExternalMetaDataChange($old_value, $new_value, $option)
@@ -122,7 +122,7 @@ class QuickGet
      *
      * @return mixed|null|void
      */
-    public function getBackupValue($fieldId, $postId)
+    public function getFallbackValue($fieldId, $postId)
     {
         if (Helper::isAcfEnabled()) {
             return get_field($fieldId, $postId);
