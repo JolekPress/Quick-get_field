@@ -22,7 +22,7 @@ class Helper
      */
     public static function isAcfEnabled()
     {
-        return function_exists('get_field');
+        return function_exists('acf');
     }
 
     public static function isMetaKeyHidden($key)
