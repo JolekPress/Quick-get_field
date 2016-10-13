@@ -69,9 +69,8 @@ class QuickGet
      */
     public function getField($fieldId, $postId = null)
     {
-        if ($postId === null) {
-            global $post;
-            $postId = $post->ID;
+        if ($this->isValidPostId($postId)) {
+            $postId = $this->getValidPostId($postId);
         }
 
         if (is_preview() || !$this->shouldWeCachePostId($postId)) {
@@ -314,6 +313,60 @@ class QuickGet
             && isset($_POST['post_ID'])
             && $_POST['post_ID'] == $postId)
         {
+            return true;
+        }
+
+        return false;
+    }
+
+    private function getValidPostId($postId)
+    {
+        if (Helper::isAcfEnabled()) {
+            return acf()->get_post_id($postId);
+        }
+
+        // This functionality is borrowed from acf()->get_post_id(). We have to copy it here if ACF is not
+        // currently enabled.
+        if (is_object($postId)) {
+            // user
+            if (isset($postId->roles, $postId->ID)) {
+
+                return 'user_' . $postId->ID;
+
+                // term
+            } elseif (isset($postId->taxonomy, $postId->term_id)) {
+
+                return $postId->taxonomy . '_' . $postId->term_id;
+
+                // comment
+            } elseif (isset($postId->comment_ID)) {
+
+                return 'comment_' . $postId->comment_ID;
+
+                // post
+            } elseif (isset($postId->ID)) {
+
+                return $postId->ID;
+
+            }
+        }
+
+        // Default value if nothing else works;
+        return 0;
+    }
+
+    /**
+     * Determine whether the provided $postId is valid for retrieving fields via the quick get field method.
+     *
+     * @param $postId
+     * @return bool
+     */
+    private function isValidPostId($postId)
+    {
+        if (
+            is_int($postId)
+            || (is_string($postId) && in_array($postId, ['option', 'options']))
+        ) {
             return true;
         }
 
